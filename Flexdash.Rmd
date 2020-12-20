@@ -1,0 +1,1048 @@
+---
+title: "Monitoring Progress"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+    runtime: shiny 
+    theme: flatly
+---
+
+<style> 
+.navbar {
+  background-color: #e87d81; 
+}
+</style> 
+
+```{r setup, include=FALSE}
+# Where required install, or load packages, for running the dashboard
+require(flexdashboard)
+require(shiny)
+require(readxl)
+require(plyr)
+require(dplyr)
+require(tidyverse)
+require(magrittr)
+require(knitr)
+require(DT)
+require(ggplot2)
+require(plotly)
+require(networkD3)
+require(d3Network)
+require(treemap)
+require(d3Tree)
+require(dygraphs)
+require(sys)
+require(highcharter)
+
+options(scipen=999)
+
+```
+
+Scorecard {data-orientation=columns}
+=======================================================================
+
+Column {style="height:100pc;"}
+-----------------------------------------------------------------------
+
+```{r loade, include=FALSE}
+# these computing functions are only toy examples
+computeArticles = function(...) return(45)
+computeComments = function(...) return(126)
+computeSpam = function(...) return(15)
+
+RMC <- read_excel("data.xlsx", sheet = "RMC") %>% 
+  gather(Type, Quantity, - Date)
+
+RMCmaxval <- ceiling(max(RMC$Date, na.rm = TRUE))
+RMCpen <- ceiling(max(RMC$Date, na.rm = TRUE)-1)
+
+```
+
+### Raw Material Consumption `r RMCpen` - `r RMCmaxval`
+
+```{r}
+RMClatest <- read_excel("data.xlsx", sheet = "RMC") %>% 
+  gather(Type, Quantity, - Date) %>% filter(Type=="Material_Footprint")
+
+RMCa <- with(RMClatest, Quantity[which.max(Date)])
+RMCb <- with(RMClatest, Quantity[which.max(Date)-1])
+RMCc <- (RMCa/RMCb-1)*100
+RMCc <- round(RMCc, digits = 2)
+
+articlesa = RMCc
+valueBox(paste0(articlesa,"%"), icon = "fa-road",
+         color = ifelse(articlesa > 0, "warning", "primary"))
+
+```
+
+### Resource Productivity `r RMCpen` - `r RMCmaxval`
+
+```{r}
+target3 <- c("Oresrp", "BiomassMaterialsrp", "FossilFuelsrp", "Mineralsrp", "Material_Footprintrp")
+
+RMCrplatest <- 
+  read_excel("data.xlsx", sheet = "RMC") %>%
+  mutate(Oresrp = GDP/(Ore_Materials*1000000)) %>%
+  mutate(BiomassMaterialsrp = GDP/(Biomass_Materials*1000000)) %>%
+  mutate(FossilFuelsrp = GDP/(Fossil_Fuels*1000000)) %>%
+  mutate(Mineralsrp = GDP/(NMMM*1000000)) %>% 
+  mutate(Material_Footprintrp = GDP/(Material_Footprint*1000000)) %>%
+  gather(Type, Quantity, - Date) %>% filter (Type %in% target3) 
+
+RMCrpa <- with(RMCrplatest, Quantity[which.max(Date)])
+RMCrpb <- with(RMCrplatest, Quantity[which.max(Date)-1])
+RMCrpc <- (RMCrpa/RMCrpb-1)*100
+RMCrpc <- round(RMCrpc, digits = 2)
+
+articles = RMCrpc
+valueBox(paste0(articles,"%"), icon = "fa-road",
+         color = ifelse(articles > 0, "olive", "primary"))
+
+```
+
+### Carbon Footprint
+
+```{r}
+comments = computeComments()
+valueBox(comments, icon = "fa-fire")
+```
+
+### Waste Sector Emissions
+
+```{r}
+comments = computeComments()
+valueBox(comments, icon = "fa-fire")
+```
+
+Column {style="height:100pc;"}
+-----------------------------------------------------------------------
+
+### Total Waste Arisings
+
+```{r}
+spam = computeSpam()
+valueBox(
+  spam, icon = "fa-trash",
+  color = ifelse(spam > 10, "warning", "primary")
+)
+```    
+
+### Household Arisings
+
+```{r}
+spam = computeSpam()
+valueBox(
+  spam, icon = "fa-trash",
+  color = ifelse(spam > 10, "warning", "primary")
+)
+```    
+
+### C&I Arisings
+
+```{r}
+spam = computeSpam()
+valueBox(
+  spam, icon = "fa-trash",
+  color = ifelse(spam > 10, "warning", "primary")
+)
+```    
+
+### Construction Arisings
+
+```{r}
+spam = computeSpam()
+valueBox(
+  spam, icon = "fa-trash",
+  color = ifelse(spam > 10, "warning", "primary")
+)
+```    
+
+Column {style="height:100pc;"}
+-----------------------------------------------------------------------
+
+### WfH Recycling
+
+```{r}
+spam = computeSpam()
+renderGauge({
+  gauge(spam, min = 0, max = 100, symbol = '%', gaugeSectors(
+    success = c(80, 100), warning = c(40, 79), danger = c(0, 39)
+  ))
+})
+```    
+
+### Municipal Waste Recycling
+
+```{r}
+spam = computeSpam()
+renderGauge({
+  gauge(spam, min = 0, max = 100, symbol = '%', gaugeSectors(
+    success = c(80, 100), warning = c(40, 79), danger = c(0, 39)
+  ))
+})
+```    
+
+### Packaging Recycling
+
+```{r}
+spam = computeSpam()
+renderGauge({
+  gauge(spam, min = 0, max = 100, symbol = '%', gaugeSectors(
+    success = c(80, 100), warning = c(40, 79), danger = c(0, 39)
+  ))
+})
+```    
+
+Column {style="height:100pc;"}
+-----------------------------------------------------------------------
+
+### WfH Recycling
+
+```{r}
+spam = computeSpam()
+renderGauge({
+  gauge(spam, min = 0, max = 100, symbol = '%', gaugeSectors(
+    success = c(80, 100), warning = c(40, 79), danger = c(0, 39)
+  ))
+})
+```    
+
+### Municipal Waste Recycling
+
+```{r}
+spam = computeSpam()
+renderGauge({
+  gauge(spam, min = 0, max = 100, symbol = '%', gaugeSectors(
+    success = c(80, 100), warning = c(40, 79), danger = c(0, 39)
+  ))
+})
+```    
+
+### Packaging Recycling
+
+```{r}
+spam = computeSpam()
+renderGauge({
+  gauge(spam, min = 0, max = 100, symbol = '%', gaugeSectors(
+    success = c(80, 100), warning = c(40, 79), danger = c(0, 39)
+  ))
+})
+```    
+
+Resource Productivity
+=======================================================================
+
+Inputs {.sidebar}
+-------------------------------------
+
+```{r}
+# Unit dropdown
+selectInput(inputId = "indicator", label = "Select the unit you would like to see the data in:",
+  c("Kilotonnes" = "Absolute",
+  "Tonnes per capita" = "Per_capita",
+  "kg per £ GBP" = "Productivity"))
+
+# Input data to paramaterise slider bar 
+RMC <- read_excel("data.xlsx", sheet = "RMC") %>% 
+  gather(Type, Quantity, - Date)
+
+# Set upper and lower bound for the slider
+minvalue <- floor(min(RMC$Date, na.rm = TRUE))
+maxvalue <- ceiling(max(RMC$Date, na.rm = TRUE))
+
+# Create slider
+sliderInput("Year", 
+            label = "Select the range of years you are interested in:",
+            min = minvalue, max = maxvalue, value = c(minvalue, maxvalue), sep = "")
+```
+\
+ 
+**Definition**: Raw material consumption (RMC) represents the world-wide amount of primary raw materials directly and indirectly used by our economy. In other words, it represents the portion of annual global raw material extraction attributable to final use.
+&nbsp;  
+
+\
+
+**Data Sources:** 
+\
+[Owen, A., Giesekam, J., Barrett, J. (2020) Material footprint and resource efficiency in the UK](http://sciencesearch.defra.gov.uk/Default.aspx?Menu=Menu&Module=More&Location=None&ProjectID=20306&FromSearch=Y&Publisher=1&SearchText=ev0279&SortString=ProjectCode&SortOrder=Asc&Paging=10%20-%20Description)
+
+Row
+-----------------------------------------------------------------------
+
+### Raw Material Consumption
+
+```{r, fig.width=10, fig.height=4, dpi=300}
+target <- c("Ore_Materials", "Biomass_Materials", "Fossil_Fuels", "NMMM", "Material_Footprint")
+target2 <- c("Ores.p.c", "BiomassMaterials.p.c", "FossilFuels.p.c", "Minerals.p.c", "Material_Footprint.p.c")
+target3 <- c("Oresrp", "BiomassMaterialsrp", "FossilFuelsrp", "Mineralsrp", "Material_Footprintrp")
+
+RMC2 <- 
+  read_excel("data.xlsx", sheet = "RMC") %>% 
+  gather(Type, Quantity, - Date) %>% filter (Type %in% target) 
+
+RMCpop <- 
+  read_excel("data.xlsx", sheet = "RMC") %>%
+  mutate(Ores.p.c = (Ore_Materials*1000)/Population) %>%
+  mutate(BiomassMaterials.p.c = (Biomass_Materials*1000)/Population) %>%
+  mutate(FossilFuels.p.c = (Fossil_Fuels*1000)/Population) %>%
+  mutate(Minerals.p.c = (NMMM*1000)/Population) %>%
+  mutate(Material_Footprint.p.c = (Material_Footprint*1000)/Population) %>%
+  gather(Type, Quantity, - Date) %>% filter (Type %in% target2) 
+
+RMCrp <- 
+  read_excel("data.xlsx", sheet = "RMC") %>%
+  mutate(Oresrp = GDP/(Ore_Materials*1000000)) %>%
+  mutate(BiomassMaterialsrp = GDP/(Biomass_Materials*1000000)) %>%
+  mutate(FossilFuelsrp = GDP/(Fossil_Fuels*1000000)) %>%
+  mutate(Mineralsrp = GDP/(NMMM*1000000)) %>% 
+  mutate(Material_Footprintrp = GDP/(Material_Footprint*1000000)) %>%
+  gather(Type, Quantity, - Date) %>% filter (Type %in% target3) 
+
+getDataset <- reactive({
+   ant <- if (input$indicator=="Absolute")
+    {
+      return(RMC2) %>% filter(RMC2$Date >= input$Year[1]  &
+             RMC2$Date <= input$Year[2])
+    }
+    else if (input$indicator=="Per_capita")
+    {
+      return(RMCpop) %>% filter(RMCpop$Date >= input$Year[1]  &
+             RMCpop$Date <= input$Year[2])
+    }
+    else
+    {
+      return(RMCrp) %>% filter(RMCrp$Date >= input$Year[1]  &
+             RMCrp$Date <= input$Year[2])
+    }
+   
+  })
+
+RMCchart <- renderPlotly({
+  ggplotRMC <- ggplot(getDataset(), aes(x= Date, y = Quantity, group = Type)) +
+  geom_line(aes(color=Type)) +
+  scale_x_continuous(breaks=seq(minvalue, maxvalue, 1)) +
+  theme(axis.title.x = element_blank()) +
+  theme(axis.title.y = element_blank())
+  
+  plotlyRMC <- ggplotly(ggplotRMC) %>% 
+  layout(legend = list(orientation = 'h')) %>% 
+  layout(legend = list(x = 0, y = - 0.1)) %>%
+  style(hoverinfo = 'none') 
+  
+}) 
+
+RMCchart
+  
+```
+
+Row
+-----------------------------------------------------------------------
+
+```{r, echo = FALSE, fig.width=10, fig.height=4}
+RMCwide <- pivot_wider(RMC2, names_from = Type, values_from = Quantity) 
+
+RMCpopwide <- pivot_wider(RMCpop, names_from = Type, values_from = Quantity) %>% as.data.frame(RMCpopwide) %>% mutate_if(is.numeric, round, digits=2) 
+
+view(RMCpopwide)
+
+RMCrpwide <- pivot_wider(RMCrp, names_from = Type, values_from = Quantity) %>% as.data.frame(RMCrpwide) %>% mutate_if(is.numeric, round, digits=2)
+
+ddata <- reactive({
+    if (input$indicator=="Absolute")
+    {
+      return(RMCwide) %>% filter(RMCwide$Date >= input$Year[1]  &
+             RMCwide$Date <= input$Year[2])
+    }
+    else if (input$indicator=="Per_capita") 
+    {
+      return(RMCpopwide) %>% filter(RMCpopwide$Date >= input$Year[1]  &
+             RMCpopwide$Date <= input$Year[2])
+    }
+    else
+    {
+      return(RMCrpwide) %>% filter(RMCrpwide$Date >= input$Year[1]  &
+             RMCrpwide$Date <= input$Year[2])
+    }
+  })
+
+renderDT(
+          ddata(),
+          rownames=FALSE,
+          extensions = 'Buttons', options = list(dom = 'Bfrtip',
+          buttons = list('csv', 
+                         'excel',
+                      I('colvis')),
+          extensions = 'Responsive',
+          pageLength = 5))
+
+```
+
+Carbon Footprint {data-navmenu="Emissions"}
+=======================================================================
+  
+Inputs {.sidebar}
+-------------------------------------
+
+```{r}
+# Unit dropdown
+selectInput(inputId = "indicatorcf", label = "Select the unit you would like to see the data in:",
+  c("Kilotonnes CO2e" = "Absolute",
+  "Tonnes CO2e per capita" = "Per_capita",
+  "kg C02e per £GBP" = "Intensity"))
+
+# Input data to paramaterise slider bar 
+cf <- read_excel("data.xlsx", sheet = "CF") %>% 
+  gather(Type, Quantity, - Date)
+
+# Set upper and lower bound for the slider
+minvaluecf <- floor(min(cf$Date, na.rm = TRUE))
+maxvaluecf <- ceiling(max(cf$Date, na.rm = TRUE))
+
+# Create slider
+sliderInput("Yearcf", 
+            label = "Select the range of years you are interested in:",
+            min = minvaluecf, max = maxvaluecf, value = c(minvaluecf, maxvaluecf), sep = "")
+```
+
+**Definition:** The ‘carbon footprint’ refers to carbon dioxide (CO2), methane (CH4) and nitrous oxide (N2O) emissions resulting from the consumption spending of households, government and charities in England on goods and services, wherever in the world these arise, and in addition to those emitted directly by households.
+
+**Data Sources:** 
+\
+[Owen, A., Giesekam, J., Barrett, J. (2020) Material footprint and resource efficiency in the UK](http://sciencesearch.defra.gov.uk/Default.aspx?Menu=Menu&Module=More&Location=None&ProjectID=20306&FromSearch=Y&Publisher=1&SearchText=ev0279&SortString=ProjectCode&SortOrder=Asc&Paging=10%20-%20Description)
+
+Row
+-----------------------------------------------------------------------
+  
+###  Carbon footprint (consumption based greenhouse gas emissions)
+
+```{r}
+targetcf <- c("Direct_household_emissions", "Production_emissions_national_consumption", "Emissions_embedded_in_imports", "Total")
+targetcfpc <- c("Direct_household_emissions.pc", "Production_emissions_national_consumption.pc", "Emissions_embedded_in_imports.pc", "Total.pc")
+targetcfin <- c("Direct_household_emissions.in", "Production_emissions_national_consumption.in", "Emissions_embedded_in_imports.in", "Total.in")
+
+cf2 <- 
+  read_excel("data.xlsx", sheet = "CF") %>% 
+  gather(Type, Quantity, - Date) %>% filter (Type %in% targetcf) 
+
+cf2pop <- 
+  read_excel("data.xlsx", sheet = "CF") %>%
+  mutate(Direct_household_emissions.pc = (Direct_household_emissions*1000)/Population) %>%
+  mutate(Production_emissions_national_consumption.pc = (Production_emissions_national_consumption*1000)/Population) %>%
+  mutate(Emissions_embedded_in_imports.pc = (Emissions_embedded_in_imports*1000)/Population) %>%
+  mutate(Total.pc = Total*1000/Population) %>%
+  gather(Type, Quantity, - Date) %>% filter (Type %in% targetcfpc) 
+
+cf2in <- 
+  read_excel("data.xlsx", sheet = "CF") %>%
+  mutate(Direct_household_emissions.in = (Direct_household_emissions*1000000)/GDP) %>%
+  mutate(Production_emissions_national_consumption.in = (Production_emissions_national_consumption*1000000)/GDP) %>%
+  mutate(Emissions_embedded_in_imports.in = (Emissions_embedded_in_imports*1000000)/GDP) %>%
+  mutate(Total.in = (Total*1000000)/GDP) %>%
+  gather(Type, Quantity, - Date) %>% filter (Type %in% targetcfin) 
+
+getDatasetcf <- reactive({
+    if (input$indicatorcf=="Absolute")
+    {
+      return(cf2) %>% filter(cf2$Date >= input$Yearcf[1]  &
+             cf2$Date <= input$Yearcf[2])
+    }
+    else if (input$indicatorcf=="Per_capita")
+    {
+      return(cf2pop) %>% filter(cf2pop$Date >= input$Yearcf[1]  &
+             cf2pop$Date <= input$Yearcf[2])
+    }
+    else
+    {
+      return(cf2in) %>% filter(cf2in$Date >= input$Yearcf[1]  &
+             cf2in$Date <= input$Yearcf[2])
+    }
+  })
+
+cfchart <- renderPlotly({
+  ggplotcf <- ggplot(getDatasetcf(), aes(x= Date, y = Quantity, group = Type)) +
+  geom_line(aes(color=Type)) +
+  scale_x_continuous(breaks=seq(minvaluecf, maxvaluecf, 1)) +
+  theme(axis.title.x = element_blank()) +
+  theme(axis.title.y = element_blank())
+  
+  plotlyRMC <- ggplotly(ggplotcf) %>% 
+  layout(legend = list(orientation = 'h')) %>% 
+  layout(legend = list(x = 0, y = - 0.1)) %>%
+  style(hoverinfo = 'none')
+  
+}) 
+
+cfchart
+  
+```
+
+Row
+-----------------------------------------------------------------------
+
+
+```{r, echo = FALSE, fig.width=10, fig.height=4}
+cfwide <- pivot_wider(cf2, names_from = Type, values_from = Quantity) %>% mutate_if(is.numeric, round, digits=0) 
+
+cfpopwide <- pivot_wider(cf2pop, names_from = Type, values_from = Quantity) %>% as.data.frame(RMCpopwide) %>% mutate_if(is.numeric, round, digits=2) 
+
+view(cfpopwide)
+cfinwide <- pivot_wider(cf2in, names_from = Type, values_from = Quantity) %>% as.data.frame(RMCrpwide) %>% mutate_if(is.numeric, round, digits=2)
+
+cftab <- reactive({
+    if (input$indicatorcf=="Absolute")
+    {
+      return(cfwide) %>% filter(cfwide$Date >= input$Yearcf[1]  &
+             cfwide$Date <= input$Yearcf[2])
+    }
+    else if (input$indicatorcf=="Per_capita")
+    {
+      return(cfpopwide) %>% filter(cfpopwide$Date >= input$Yearcf[1]  &
+             cfpopwide$Date <= input$Yearcf[2])
+    }
+    else
+    {
+      return(cfinwide) %>% filter(cfinwide$Date >= input$Yearcf[1]  &
+             cfinwide$Date <= input$Yearcf[2])
+    }
+  })
+
+DT::renderDT(
+          cftab(),
+          rownames=FALSE,
+          extensions = 'Buttons', options = list(dom = 'Bfrtip',
+          buttons = 
+          list('print', list(
+          extend = 'collection',
+          buttons = c('copy','csv','excel','pdf'),
+          text = 'Download',
+          extensions = 'Responsive')),
+          pageLength = 5))
+
+```
+
+
+Waste Sector Emissions {data-navmenu="Emissions"}
+=======================================================================
+  
+Inputs {.sidebar}
+-------------------------------------
+
+**Unit:** Million tonnes
+\  
+
+```{r}
+# Input data to paramaterise slider bar 
+wse <- read_excel("data.xlsx", sheet = "WSE") %>% 
+  gather(Type, Quantity, - Date) %>% mutate_if(is.numeric, round, digits=3) 
+
+# Set upper and lower bound for the slider
+minvaluewse <- floor(min(wse$Date, na.rm = TRUE))
+maxvaluewse <- ceiling(max(wse$Date, na.rm = TRUE))
+
+# Create slider
+sliderInput("Range", 
+            label = "Select the range of years you are interested in:",
+            min = minvaluewse, max = maxvaluewse, value = c(minvaluewse, maxvaluewse), sep = "")
+```
+
+\ 
+
+**Definition**: The ‘waste management sector’ is a category used in international reporting and for which data in collected within the National Atmospheric Emissions Inventory.  Greenhouse gases covered within the inventory are carbon dioxide (CO2), methane (CH4), nitrous oxide (N2O) and fluorinated compounds (hydrofluorocarbons (HFCs), perfluorocarbons (PFCs), sulphur hexafluoride (SF6) and nitrogen trifluoride (NF3).
+\ 
+
+**Data Sources:** 
+\ 
+
+[Greenhouse Gas Inventories for England, Scotland, Wales & Northern Ireland: 1990-2018](https://naei.beis.gov.uk/reports/reports?section_id=4)
+
+Row
+-----------------------------------------------------------------------
+  
+### Domestic greenhouse gas (GHG) emissions from the Waste Management Sector
+
+```{r}
+wse$Type<-factor(wse$Type, levels=c('Anaerobic_Digestion', 'Waste_incineration', 'Composting', 'Waste-water handling', 'Landfill'))
+
+ d <- reactive({
+    filtered <-
+      wse %>%
+      filter(wse$Date >= input$Range[1],
+             wse$Date <= input$Range[2])
+  })
+
+wsechart <- renderPlotly({
+  ggplotwse <- ggplot(d(),
+                       aes(fill = Type, x= Date, y= Quantity)) +
+  geom_bar(position="stack", stat="identity") +
+  scale_x_continuous(breaks=seq(minvaluewse, maxvaluewse, 2)) +
+  theme(axis.title.x = element_blank()) +
+  theme(axis.title.y = element_blank())
+  
+  plotlyRMC <- ggplotly(ggplotwse) %>% 
+  layout(legend = list(orientation = 'h')) %>% 
+  layout(legend = list(x = 0, y = - 0.1))
+  
+}) 
+
+wsechart
+  
+```
+
+Row
+-----------------------------------------------------------------------
+
+```{r, echo = FALSE, fig.width=10, fig.height=4}
+wsetab <- read_excel("data.xlsx", sheet = "WSE") %>% mutate_if(is.numeric, round, digits=3)
+
+wsetab2 <- reactive({
+    filtered <-
+      wsetab %>%
+      filter(wsetab$Date >= input$Range[1],
+             wsetab$Date <= input$Range[2])
+  })
+ 
+renderDT(
+          wsetab2(),
+          rownames=FALSE,
+          extensions = 'Buttons', options = list(dom = 'Bfrtip',
+          buttons = list('csv', 
+                         'excel',
+                      I('colvis')),
+          extensions = 'Responsive',
+          pageLength = 5)) 
+
+```
+
+Waste Sector Emissions Alt {data-navmenu="Emissions"}
+=======================================================================
+
+Inputs {.sidebar}
+-------------------------------------
+```{r}
+
+```
+
+Row
+-----------------------------------------------------------------------
+
+### WSEalt
+
+```{r, fig.width=10, fig.height=4}
+wseme <- read_excel("data.xlsx", sheet = "WSE") 
+
+dygraph(wseme, main = "WSE") %>% 
+  dyRangeSelector(dateWindow = c("2010", "2018"))
+
+```
+
+Row
+-----------------------------------------------------------------------
+```{r}
+
+```
+
+
+Total Waste Arisings {data-navmenu="Waste Arisings"}
+=======================================================================
+
+Inputs {.sidebar}
+-------------------------------------
+```{r}
+
+```
+
+Row
+-----------------------------------------------------------------------
+
+### Waste arisings
+
+```{r, fig.width=10, fig.height=4}
+
+```
+
+Row
+-----------------------------------------------------------------------
+```{r}
+
+```
+
+Avoidable Waste {data-navmenu="Waste Arisings"}
+=======================================================================
+
+Inputs {.sidebar}
+-------------------------------------
+
+```{r}
+
+```
+
+Row
+-----------------------------------------------------------------------
+
+```{r}
+
+```
+
+Avoidable Plastic Waste {data-navmenu="Waste Arisings"}
+=======================================================================
+
+Inputs {.sidebar}
+-------------------------------------
+
+```{r}
+
+```
+
+Row
+-----------------------------------------------------------------------
+
+```{r}
+
+```
+
+Food Waste {data-navmenu="Waste Arisings"}
+=======================================================================
+
+Inputs {.sidebar}
+-------------------------------------
+
+```{r}
+
+```
+
+Row
+-----------------------------------------------------------------------
+
+```{r}
+
+```
+
+Residual Waste {data-navmenu="Waste Arisings"}
+=======================================================================
+
+Inputs {.sidebar}
+-------------------------------------
+
+```{r}
+
+```
+
+Row
+-----------------------------------------------------------------------
+
+```{r}
+
+```
+
+Row
+-----------------------------------------------------------------------
+
+Row
+-----------------------------------------------------------------------
+
+WfH Recycling {data-navmenu="Recycling"}
+=======================================================================
+
+Inputs {.sidebar}
+-------------------------------------
+```{r}
+
+targetwfhrate <- c("Arisings", "Of which recycled (excl. IBAm)", "Of which recycled (incl. IBAm)")
+
+selectInput("wfhanreg", 
+              label = "Select your region of interest", 
+              c("UK" = "UK",
+                        "England" = "England",
+                        "Norther Ireland" = "NI",
+                        "Scotland" = "Scotland",
+                        "Wales" = "Wales"))
+
+selectInput("wfhaniba", 
+              label = "Include/Exclude IBA", 
+              c("Include IBA" = "Include IBA",
+                "Exclude IBA" = "Exclude IBA"))
+
+wfhinput <- read_excel("data.xlsx", sheet = "WFHan") %>%
+  gather(Region, Quantity, -Measure, -Date)
+
+# Set upper and lower bound for the slider
+minvaluewfh <- floor(min(wfhinput$Date, na.rm = TRUE))
+maxvaluewfh <- ceiling(max(wfhinput$Date, na.rm = TRUE))
+
+# Create slider
+sliderInput("Range", 
+            label = "Select the range of years you are interested in:",
+            min = minvaluewfh, max = maxvaluewfh, value = c(minvaluewfh, maxvaluewfh), sep = "")
+
+wfhrate <- wfhinput %>% filter (Measure %in% targetwfhrate) 
+
+wfhpop <- 
+  wfhrate %>%
+  mutate(Ores.p.c = (Ore_Materials*1000)/Population) %>%
+  mutate(BiomassMaterials.p.c = (Biomass_Materials*1000)/Population) %>%
+  mutate(FossilFuels.p.c = (Fossil_Fuels*1000)/Population) %>%
+  mutate(Minerals.p.c = (NMMM*1000)/Population) %>%
+  mutate(Material_Footprint.p.c = (Material_Footprint*1000)/Population) %>%
+  gather(Type, Quantity, - Date) %>% filter (Type %in% target2) 
+
+getDataset <- reactive({
+   ant <- if (input$indicator=="Absolute")
+    {
+      return(RMC2) %>% filter(RMC2$Date >= input$Year[1]  &
+             RMC2$Date <= input$Year[2])
+    }
+    else if (input$indicator=="Per_capita")
+    {
+      return(RMCpop) %>% filter(RMCpop$Date >= input$Year[1]  &
+             RMCpop$Date <= input$Year[2])
+    }
+    else
+    {
+      return(RMCrp) %>% filter(RMCrp$Date >= input$Year[1]  &
+             RMCrp$Date <= input$Year[2])
+    }
+   
+  })
+
+
+RMCchart <- renderPlotly({
+  ggplotRMC <- ggplot(getDataset(), aes(x= Date, y = Quantity, group = Type)) +
+  geom_line(aes(color=Type)) +
+  scale_x_continuous(breaks=seq(minvalue, maxvalue, 1)) +
+  theme(axis.title.x = element_blank()) +
+  theme(axis.title.y = element_blank())
+  
+  plotlyRMC <- ggplotly(ggplotRMC) %>% 
+  layout(legend = list(orientation = 'h')) %>% 
+  layout(legend = list(x = 0, y = - 0.1)) %>%
+  style(hoverinfo = 'none') 
+  
+}) 
+
+RMCchart
+
+
+```
+
+\ 
+
+**Definition**: ‘Waste from Households’ recycled refers to waste generated by households sent for recycling, composting or reuse in England. This measure is calculated in accordance with Waste Framework Directive (2008/98/EC) and includes waste from regular household collection, civic amenity sites, bulky waste and other household waste.
+
+\ 
+
+**Data Sources:** 
+\ 
+
+[Defra (2020) Local authority collected waste management - annual results](https://www.gov.uk/government/statistics/local-authority-collected-waste-management-annual-results)
+ 
+Row  {.tabset .tabset-fade}
+-----------------------------------------------------------------------
+
+### Tonnages
+
+```{r}
+
+```
+
+### Rate
+    
+```{r}
+
+```
+
+Row
+-----------------------------------------------------------------------
+
+
+Municipal Waste Recycling {data-navmenu="Recycling"}
+=======================================================================
+
+Inputs {.sidebar}
+-------------------------------------
+
+```{r}
+
+```
+
+Row
+-----------------------------------------------------------------------
+
+```{r}
+
+wfhan <- read_excel("data.xlsx", sheet = "WFHan") %>%
+  gather(Region, Value,- Measure, - Year) 
+
+```
+
+C&I Waste Recycling {data-navmenu="Recycling"}
+=======================================================================
+
+Inputs {.sidebar}
+-------------------------------------
+
+```{r}
+
+```
+
+Row
+-----------------------------------------------------------------------
+
+```{r}
+
+```
+
+C & D Waste Recovery {data-navmenu="Recycling"}
+=======================================================================
+
+Inputs {.sidebar}
+-------------------------------------
+
+```{r}
+
+```
+
+Row
+-----------------------------------------------------------------------
+
+```{r}
+
+```
+
+Packaging Waste Recycling {data-navmenu="Recycling"}
+=======================================================================
+
+Inputs {.sidebar}
+-------------------------------------
+
+```{r}
+
+```
+Row
+-----------------------------------------------------------------------
+
+```{r}
+
+```
+Row
+-----------------------------------------------------------------------
+
+Row
+-----------------------------------------------------------------------
+
+Municipal Waste Landfilled {data-navmenu="Landfilling"}
+=======================================================================
+
+Inputs {.sidebar}
+-------------------------------------
+```{r}
+
+```
+Row
+-----------------------------------------------------------------------
+```{r}
+
+```
+
+Biodegradable Waste Landfilled {data-navmenu="Landfilling"}
+=======================================================================
+
+Inputs {.sidebar}
+-------------------------------------
+```{r}
+
+```
+
+Row
+-----------------------------------------------------------------------
+```{r}
+
+```
+
+Food Waste Landfilled {data-navmenu="Landfilling"}
+=======================================================================
+
+Inputs {.sidebar}
+-------------------------------------
+```{r}
+
+```
+Row
+-----------------------------------------------------------------------
+
+```{r}
+
+```
+Row
+-----------------------------------------------------------------------
+
+Row
+-----------------------------------------------------------------------
+
+Illegal Waste Sites {data-navmenu="Waste Crime"}
+=======================================================================
+
+Inputs {.sidebar}
+-------------------------------------
+```{r}
+
+```
+Row
+-----------------------------------------------------------------------
+```{r}
+
+```
+
+Fly-tipping {data-navmenu="Waste Crime"} 
+=======================================================================
+Inputs {.sidebar}
+-------------------------------------
+```{r}
+
+```
+Row
+-----------------------------------------------------------------------
+```{r}
+
+```
+
+Litter {data-navmenu="Waste Crime"}
+=======================================================================
+Inputs {.sidebar}
+-------------------------------------
+```{r}
+
+```
+Row
+-----------------------------------------------------------------------
+```{r}
+
+```
+
+Row
+-----------------------------------------------------------------------
+
+Row
+-----------------------------------------------------------------------
+
+Circular Economy
+=======================================================================
+  
+Row
+-----------------------------------------------------------------------
+  
+### Material Flows
+```{r}
+
+# Load data
+linkages2 <- read_xlsx("SankeyData2.xlsx", "links")
+noders2  <- read_xlsx("SankeyData2.xlsx", "nodes")
+
+# Sankey plot it
+sankey <- sankeyNetwork(Links = linkages2, Nodes = noders2, Source = "source", Target = "target", Value = "value", NodeID = "name", fontSize = 12, nodeWidth = 60, iteration = 1)
+
+sankey
+```
+
+
+
